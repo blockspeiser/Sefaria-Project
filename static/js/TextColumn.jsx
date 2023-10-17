@@ -370,6 +370,7 @@ class TextColumn extends Component {
       return (<TextRange
         panelPosition ={this.props.panelPosition}
         sref={sref}
+        contextId={this.props.contextId}
         isCurrentlyVisible={isCurrentlyVisible}
         currVersions={this.props.currVersions}
         highlightedRefs={this.props.highlightedRefs}
@@ -393,6 +394,7 @@ class TextColumn extends Component {
         panelsOpen={this.props.panelsOpen}
         layoutWidth={this.props.layoutWidth}
         unsetTextHighlight={this.props.unsetTextHighlight}
+        navigatePanel={this.props.navigatePanel}
         translationLanguagePreference={this.props.translationLanguagePreference}
         updateCurrVersionsToMatchAPIResult={this.props.updateCurrVersionsToMatchAPIResult}
         key={sref} />);
@@ -458,6 +460,7 @@ TextColumn.propTypes = {
   textHighlights:         PropTypes.array,
   unsetTextHighlight:     PropTypes.func,
   translationLanguagePreference: PropTypes.string,
+  navigatePanel:          PropTypes.func,
 };
 
 

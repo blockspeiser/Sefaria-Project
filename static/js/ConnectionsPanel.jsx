@@ -343,7 +343,7 @@ class ConnectionsPanel extends Component {
             <div className="topToolsButtons">
               <ToolsButton en="About this Text" he="אודות הטקסט" image="about-text.svg" urlConnectionsMode="About" onClick={() => this.props.setConnectionsMode("About")} />
               <ToolsButton en="Table of Contents" he="תוכן העניינים" image="text-navigation.svg" urlConnectionsMode="Navigation" onClick={() => this.props.setConnectionsMode("Navigation")} />
-              <ToolsButton en="Search in this Text" he="חפש בטקסט" image="compare.svg" urlConnectionsMode="SidebarSearch" onClick={() => this.props.setConnectionsMode("SidebarSearch")} />
+              <ToolsButton en="Search in this Text" he="חיפוש בטקסט" image="compare.svg" urlConnectionsMode="SidebarSearch" onClick={() => this.props.setConnectionsMode("SidebarSearch")} />
               <ToolsButton en="Translations" he="תרגומים" image="translation.svg"  urlConnectionsMode="Translations" onClick={() => this.props.setConnectionsMode("Translations")} count={resourcesButtonCounts.translations} />
             </div>
           }
@@ -609,6 +609,7 @@ class ConnectionsPanel extends Component {
         masterPanelLanguage={this.props.masterPanelLanguage}
         setConnectionsMode={this.props.setConnectionsMode}
         mode={this.props.mode}
+        contextId={this.props.contextId}
         setFilter={this.props.setVersionFilter}
         title={this.props.title}
         srefs={this.props.srefs}
@@ -620,6 +621,7 @@ class ConnectionsPanel extends Component {
     } else if (this.props.mode === "Translations" || this.props.mode === "Translation Open") {
       content = (<TranslationsBox
         key={`Translations`}
+        contextId={this.props.contextId}
         currObjectVersions={this.state.currObjectVersions}
         setConnectionsMode={this.props.setConnectionsMode}
         mode={this.props.mode}
@@ -698,6 +700,7 @@ ConnectionsPanel.propTypes = {
   mode: PropTypes.string.isRequired, // "Resources", "ConnectionsList", "TextList" etc., called `connectionsMode` above
   connectionsCategory: PropTypes.string,            // with mode:"ConnectionsList", which category of connections to show
   setFilter: PropTypes.func.isRequired,
+  contextId: PropTypes.string.isRequired,
   setConnectionsMode: PropTypes.func.isRequired,
   setConnectionsCategory: PropTypes.func.isRequired,
   editNote: PropTypes.func.isRequired,
@@ -1199,7 +1202,7 @@ const TopicListItem = ({ id, topic, interfaceLang, srefs }) => {
         topic.description && (topic.description.en || topic.description.he) ? (
 
           <span className="smallText">
-            <InterfaceText markdown={{en: topic.description.en, he: topic.description.he}} />
+            <ContentText markdown={{en: topic.description.en, he: topic.description.he}} />
           </span>
         ) : null
       }
