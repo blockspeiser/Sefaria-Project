@@ -413,8 +413,7 @@ def get_search_categories(oref, categories):
     return indexed_categories
 
 
-class TextIndexer(object):
-
+class TextIndexer():
     @classmethod
     def clear_cache(cls):
         cls.terms_dict = None

@@ -42,7 +42,7 @@ def normalizer(lang):
 splitter = re.compile(r"[\s,]+")
 
 
-class AutoCompleter(object):
+class AutoCompleter():
     """
     An AutoCompleter object provides completion services - it is the object in this module designed to be used by the Library.
     It instantiates objects that provide string completion according to different algorithms.
@@ -251,8 +251,7 @@ class AutoCompleter(object):
     '''
 
 
-
-class Completions(object):
+class Completions():
     def __init__(self, auto_completer, lang, instring, limit=0, do_autocorrect = True):
         """
         An object that contains a single search, delegates to different methods of completions, and aggregates results.
@@ -523,7 +522,7 @@ class TitleTrie(datrie.Trie):
                 }
 
 
-class SpellChecker(object):
+class SpellChecker():
     """
     Utilities to find small edits of a given string,
     and also to find edits of a given string that result in words in our title list.
@@ -577,10 +576,8 @@ class SpellChecker(object):
         return [self.correct_token(token) for token in tokens if token]
 
 
-class NGramMatcher(object):
-    """
-    Utility to find titles in our list that roughly match a given string. 
-    """
+class NGramMatcher():
+    """Utility to find titles in our list that roughly match a given string."""
 
     # MIN_N_GRAM_SIZE = 3
 

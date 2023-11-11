@@ -46,7 +46,7 @@ from sefaria.constants import model as constants
 """
 
 
-class AbstractIndex(object):
+class AbstractIndex():
     def contents(self, raw=False, **kwargs):
         pass
 
@@ -926,7 +926,8 @@ class IndexSet(abst.AbstractMongoSet):
                     -------------------
 """
 
-class AbstractSchemaContent(object):
+
+class AbstractSchemaContent():
     content_attr = "content"
 
     def get_content(self):
@@ -981,9 +982,8 @@ class AbstractSchemaContent(object):
             return node
 
 
-class AbstractTextRecord(object):
-    """
-    """
+class AbstractTextRecord():
+
     text_attr = "chapter"
     ALLOWED_TAGS    = constants.ALLOWED_TAGS_IN_ABSTRACT_TEXT_RECORD
     ALLOWED_ATTRS   = constants.ALLOWED_ATTRS_IN_ABSTRACT_TEXT_RECORD
@@ -2172,7 +2172,7 @@ class VirtualTextChunk(AbstractTextRecord):
 
 
 # This was built as a bridge between the object model and existing front end code, so has some hallmarks of that legacy.
-class TextFamily(object):
+class TextFamily():
     """
     A text with its translations and optionally the commentary on it.
 
@@ -4789,7 +4789,7 @@ class Ref(object, metaclass=RefCacheType):
                 return matched_ref
 
 
-class Library(object):
+class Library():
     """
     Operates as a singleton, through the instance called ``library``.
 

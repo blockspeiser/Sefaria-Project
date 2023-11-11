@@ -615,7 +615,7 @@ class AuthorTopicSet(PersonTopicSet):
     recordClass = AuthorTopic
 
 
-class TopicLinkHelper(object):
+class TopicLinkHelper():
     """
     Used to collect attributes and functions that are useful for both IntraTopicLink and RefTopicLink
     Decided against superclass arch b/c instantiated objects will be of type super class.
@@ -827,7 +827,7 @@ class RefTopicLink(abst.AbstractMongoRecord):
             d.pop('toTopic')
         return d
 
-class TopicLinkSetHelper(object):
+class TopicLinkSetHelper():
     @staticmethod
     def init_query(query, link_class):
         query = query or {}

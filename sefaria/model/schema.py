@@ -33,9 +33,10 @@ from sefaria.utils.talmud import daf_to_section
 """
 
 
-class TitleGroup(object):
+class TitleGroup():
     """
-    A collection of titles.  Used for titles of SchemaNodes and for Terms
+    A collection of titles.
+    Used for titles of SchemaNodes and for Terms.
     """
     langs = ["en", "he"]
 
@@ -170,7 +171,7 @@ class TitleGroup(object):
         return self
 
 
-class AbstractTitledObject(object):
+class AbstractTitledObject():
 
     def add_primary_titles(self, en_title, he_title):
         self.add_title(en_title, 'en', primary=True)
@@ -404,7 +405,7 @@ def deserialize_tree(serial=None, **kwargs):
         raise IndexSchemaError("Schema node has neither 'nodes' nor 'nodeType' and 'leaf_class' not provided: {}".format(serial))
 
 
-class TreeNode(object):
+class TreeNode():
     """
     A single node in a tree.
     These trees are hierarchies - each node can have 1 or 0 parents.
@@ -2003,7 +2004,7 @@ class SheetLibraryNode(VirtualNode):
 """
 
 
-class AddressType(object):
+class AddressType():
     """
     Defines a scheme for referencing and addressing a level of a Jagged Array.
     Used by :class:`NumberedTitledTreeNode`

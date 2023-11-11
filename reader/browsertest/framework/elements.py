@@ -27,7 +27,7 @@ from selenium.common.exceptions import NoSuchElementException, NoAlertPresentExc
 import time # import stand library below name collision in sefaria.model
 
 
-class AbstractTest(object):
+class AbstractTest():
     every_build = False     # Run this test on every build?
     daily = False           # Run this test daily?
     weekly = False          # Run this test weekly?
@@ -985,7 +985,8 @@ class SefariaTest(AbstractTest):
 
 """
 
-class AbstractTestResult(object):
+
+class AbstractTestResult():
     def word_status(self):
         pass
 
@@ -1171,7 +1172,7 @@ SAUCE_USERNAME = ""
 SAUCE_ACCESS_KEY = ""
 
 
-class Trial(object):
+class Trial():
     global SAUCE_USERNAME, SAUCE_ACCESS_KEY 
     default_local_driver = webdriver.Chrome
     # default_local_driver = webdriver.Firefox
@@ -1475,9 +1476,10 @@ def highlight(element):
     time.sleep(.3)
     apply_style(original_style)
 
-class one_of_these_texts_present_in_element(object):
-    """ An expectation for checking if the given text is present in the
-    specified element.
+
+class one_of_these_texts_present_in_element():
+    """
+    An expectation for checking if the given text is present in the specified element.
     locator, text
     """
 

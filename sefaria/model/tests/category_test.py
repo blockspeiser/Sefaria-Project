@@ -160,7 +160,7 @@ class Test_Category_Editor(object):
         Test_Category_Editor.modify_and_reverse(new_categories, create_new_main_cat_shared_title, create_new_terms, create_new_cats, create_new_collection, create_fake_indices)
 
 
-class Test_Categories(object):
+class Test_Categories():
     def test_index_save_with_bad_categories(self):
         title = 'Test Bad Cat'
         d = {
@@ -244,7 +244,7 @@ class Test_Categories(object):
 Are these tests necessary anymore?
 They were useful in validating 1st class categories against older forms. 
 """
-class Test_OO_Toc(object):
+class Test_OO_Toc():
     def test_round_trip(self):
         base_toc = library.get_toc()
         base_json = json.dumps(base_toc, sort_keys=True)
