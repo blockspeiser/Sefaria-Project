@@ -20,7 +20,7 @@ nonexistent_nb_id_only = False
 gt = 0
 skip = []
 i = 1
-while(i < len(sys.argv)):
+while i < len(sys.argv):
     if sys.argv[i] == "--trends-only":
         trends_only = True
     elif sys.argv[i] == "--tags-only":
