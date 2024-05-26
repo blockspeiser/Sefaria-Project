@@ -9,7 +9,7 @@ import $ from './sefaria/sefariaJquery';
 import EditCollectionPage from './EditCollectionPage';
 import Footer from './Footer';
 import SearchState from './sefaria/searchState';
-import {ContentLanguageContext, AdContext, StrapiDataProvider, ExampleComponent, StrapiDataContext} from './context';
+import {ReaderPanelContext, AdContext, StrapiDataProvider, ExampleComponent, StrapiDataContext} from './context';
 import {
   ContestLandingPage,
   RemoteLearningPage,
@@ -138,7 +138,7 @@ class ReaderApp extends Component {
       currentlyVisibleRef:     state.refs && state.refs.length ? state.refs[0] : null,
       recentFilters:           state.recentFilters           || state.filter || [],
       recentVersionFilters:    state.recentVersionFilters    || state.versionFilter || [],
-      menuOpen:                state.menuOpen                || null, // "navigation", "text toc", "display", "search", "sheets", "community", "book toc"
+      menuOpen:                state.menuOpen                || null, // "navigation", "display", "search", "sheets", "community", "book toc"
       navigationCategories:    state.navigationCategories    || [],
       navigationTopicCategory: state.navigationTopicCategory || "",
       sheetID:                 state.sheetID                 || null,
@@ -334,7 +334,7 @@ class ReaderApp extends Component {
       Sefaria.track.setContentLanguage(contentLanguages.join(" | "));
 
       // Set Versions - per text panel
-      var versionTitles = textPanels.map(p => p.currVersions.en ? `${p.currVersions.en}(en)`: (p.currVersions.he ? `${p.currVersions.he}(he)` : 'default version'));
+      var versionTitles = textPanels.map(p => p.currVersions.en ? `${p.currVersions.en.versionTitle}(en)`: (p.currVersions.he ? `${p.currVersions.he.versionTitle}(he)` : 'default version'));
       Sefaria.track.setVersionTitle(versionTitles.join(" | "));
 
       // Set Sidebar usages
@@ -386,8 +386,7 @@ class ReaderApp extends Component {
           (next.mode === "Connections" && !prev.refs.compare(next.refs)) ||
           (next.currentlyVisibleRef !== prev.currentlyVisibleRef) ||
           (next.connectionsMode !== prev.connectionsMode) ||
-          (prev.currVersions.en !== next.currVersions.en) ||
-          (prev.currVersions.he !== next.currVersions.he) ||
+          (!Sefaria.areBothVersionsEqual(prev.currVersions, next.currVersions)) ||
           (prev.searchQuery != next.searchQuery) ||
           (prev.searchTab != next.searchTab) ||
           (prev.tab !== next.tab) ||
@@ -447,25 +446,11 @@ class ReaderApp extends Component {
             hist.url   = "texts" + (cats ? "/" + cats : "");
             hist.mode  = "navigation";
             break;
-          case "text toc":
-            var ref    = state.refs.slice(-1)[0];
-            var bookTitle  = ref ? Sefaria.parseRef(ref).index : "404";
-            hist.title = Sefaria._(bookTitle) + " | " + Sefaria._(siteName);
-            hist.url   = bookTitle.replace(/ /g, "_");
-            hist.mode  = "text toc";
-            break;
           case "book toc":
             var bookTitle = state.bookRef;
             hist.title = Sefaria._(bookTitle) + " | " + Sefaria._(siteName);
             hist.url = bookTitle.replace(/ /g, "_");
             hist.mode = "book toc";
-            break;
-          case "sheet meta":
-            const sheet = Sefaria.sheets.loadSheetByID(state.sheetID);
-            const sheetTitle = sheet? sheet.title.stripHtml() : "";
-            hist.title = Sefaria._(siteName + " Source Sheets")+": " + sheetTitle;
-            hist.url = i == 0 ? "sheets/"+ state.sheetID : "sheet&s="+ state.sheetID;
-            hist.mode = "sheet meta";
             break;
           case "extended notes":
             var bookTitle = state.mode==="Connections" ?Sefaria.parseRef(state.currentlyVisibleRef).index : state.bookRef;
@@ -1154,7 +1139,10 @@ toggleSignUpModal(modalContentKind = SignUpModalKind.Default) {
       let slug = path.slice(14);
       this.openTranslationsPage(slug);
     } else if (Sefaria.isRef(path.slice(1))) {
-      const currVersions = {en: params.get("ven"), he: params.get("vhe")};
+      const currVersions = {
+        en: Sefaria.util.getObjectFromUrlParam(params.get("ven")),
+        he: Sefaria.util.getObjectFromUrlParam(params.get("vhe"))
+      };
       const options = {showHighlight: path.slice(1).indexOf("-") !== -1};   // showHighlight when ref is ranged
       openPanel(Sefaria.humanRef(path.slice(1)), currVersions, options);
     } else {
@@ -1287,8 +1275,7 @@ toggleSignUpModal(modalContentKind = SignUpModalKind.Default) {
           !nextPanel.refs || nextPanel.refs.length == 0 ||
           !prevPanel.refs || prevPanel.refs.length == 0 ) { return false; }
       if (nextPanel.refs.compare(prevPanel.refs)) {
-        if (nextPanel.currVersions.en !== prevPanel.currVersions.en) { return true; }
-        if (nextPanel.currVersions.he !== prevPanel.currVersions.he) { return true; }
+        if (!Sefaria.areBothVersionsEqual(nextPanel.currVersions, prevPanel.currVersions)) { return true; }
         //console.log('didPanelRefChange?', nextPanel.highlightedRefs, prevPanel.highlightedRefs);
         return !((nextPanel.highlightedRefs || []).compare(prevPanel.highlightedRefs || []));
       } else {
@@ -1335,14 +1322,14 @@ toggleSignUpModal(modalContentKind = SignUpModalKind.Default) {
     }
     return { dependentPanel, isDependentPanelConnections };
   }
-  selectVersion(n, versionName, versionLanguage) {
+  selectVersion(n, versionTitle, versionLanguage, languageFamilyName) {
     // Set the version for panel `n`.
     const panel = this.state.panels[n];
     const oRef = Sefaria.ref(panel.refs[0]);
-    if (versionName && versionLanguage) {
-      panel.currVersions[versionLanguage] = versionName;
-      this.setCachedVersion(oRef.indexTitle, versionLanguage, versionName);
-      Sefaria.track.event("Reader", "Choose Version", `${oRef.indexTitle} / ${versionName} / ${versionLanguage}`)
+    if (versionTitle && versionLanguage) {
+      panel.currVersions[versionLanguage] = {versionTitle, languageFamilyName};
+      this.setCachedVersion(oRef.indexTitle, versionLanguage, versionTitle, languageFamilyName);
+      Sefaria.track.event("Reader", "Choose Version", `${oRef.indexTitle} / ${versionTitle} / ${versionLanguage}`)
     } else {
       panel.currVersions[versionLanguage] = null;
       Sefaria.track.event("Reader", "Choose Version", `${oRef.indexTitle} / default version / ${panel.settings.language}`)
@@ -1383,37 +1370,37 @@ toggleSignUpModal(modalContentKind = SignUpModalKind.Default) {
     Object.assign(panel, updatePanelObj);
     this.setState({panels: this.state.panels});
   }
-  viewExtendedNotes(n, method, title, versionLanguage, versionName) {
+  viewExtendedNotes(n, method, title, versionLanguage, versionTitle, languageFamilyName) {
     const panel = this.state.panels[n];
     panel.bookRef = title;
     panel.currVersions = {'en': null, 'he': null}; // ensure only 1 version is set
-    panel.currVersions[versionLanguage] = versionName;
+    panel.currVersions[versionLanguage] = {versionTitle, languageFamilyName};
     if (method === "toc") {
       panel.menuOpen = "extended notes";
     }
     else if (method === "Connections") {
       panel.connectionsMode = "extended notes";
     }
-    this.setState({panels: this.state.panels});
+   this.setState({panels: this.state.panels});
   }
   backFromExtendedNotes(n, bookRef, currVersions){
     const panel = this.state.panels[n];
-    panel.menuOpen = panel.currentlyVisibleRef ? "text toc" : "book toc";
+    panel.menuOpen = "book toc";
     panel.bookRef = bookRef;
     panel.currVersions = currVersions;
-    this.setState({panels: this.state.panels});
+   this.setState({panels: this.state.panels});
   }
   // this.state.defaultVersion is a depth 2 dictionary - keyed: bookname, language
   getCachedVersion(indexTitle, language) {
     if ((!indexTitle) || (!(this.state.defaultVersions[indexTitle]))) { return null; }
     return (language) ? (this.state.defaultVersions[indexTitle][language] || null) : this.state.defaultVersions[indexTitle];
   }
-  setCachedVersion(indexTitle, language, versionTitle) {
+  setCachedVersion(indexTitle, language, versionTitle, languageFamilyName) {
     this.state.defaultVersions[indexTitle] = this.state.defaultVersions[indexTitle] || {};
-    this.state.defaultVersions[indexTitle][language] = versionTitle;  // Does this need a setState?  I think not.
+      this.state.defaultVersions[indexTitle][language] = {versionTitle, languageFamilyName};  // Does this need a setState?  I think not.
   }
   setDefaultOption(option, value) {
-    if (value !== this.state.defaultPanelSettings[option]) {
+   if (value !== this.state.defaultPanelSettings[option]) {
       this.state.defaultPanelSettings[option] = value;
       this.setState(this.state);
     }
@@ -1497,7 +1484,7 @@ toggleSignUpModal(modalContentKind = SignUpModalKind.Default) {
     if (connectionPanel) {
       newPanels.push(connectionPanel);
     }
-    this.setState({panels: newPanels});
+   this.setState({panels: newPanels});
     if (saveLastPlace) {
       this.saveLastPlace(panel, n + 1, !!connectionPanel);
     }
@@ -1569,7 +1556,7 @@ toggleSignUpModal(modalContentKind = SignUpModalKind.Default) {
       panel = {...panel, ...textListState};
     }
     newPanels[n] = this.makePanelState(panel);
-    this.setState({panels: newPanels});
+   this.setState({panels: newPanels});
   }
   setTextListHighlight(n, refs) {
     // Set the textListHighlight for panel `n` to `refs`
@@ -1802,8 +1789,7 @@ toggleSignUpModal(modalContentKind = SignUpModalKind.Default) {
     } else {
       ref = (hasSidebar && panel.highlightedRefs && panel.highlightedRefs.length) ? Sefaria.normRef(panel.highlightedRefs) : (panel.currentlyVisibleRef || panel.refs.slice(-1)[0]);  // Will currentlyVisibleRef ever not be available?
     }
-    // strip APIResult fields from currVersions
-    const currVersions = Sefaria.util.getCurrVersionsWithoutAPIResultFields(panel.currVersions);
+    const currVersions = panel.currVersions;
     const parsedRef = Sefaria.parseRef(ref);
     if (!ref) { debugger; }
     return {
@@ -1850,7 +1836,7 @@ toggleSignUpModal(modalContentKind = SignUpModalKind.Default) {
     return false;
   }
   getDisplayString(mode) {
-    const learningStatus = ["text toc", "book toc", "sheet meta",  "Text", "TextAndConnections", "SheetAndConnections"];
+    const learningStatus = ["book toc", "Text", "TextAndConnections", "SheetAndConnections"];
     const topicStatus = ["topicCat", "topic"]
     if(mode.includes("sheet")) {
       return "learning the Sheet"
@@ -1865,7 +1851,7 @@ toggleSignUpModal(modalContentKind = SignUpModalKind.Default) {
   }
   generateCurrentlyReading() {
     const currentHistoryState = this.makeHistoryState();
-    const inBeitMidrash = ["navigation", "text toc", "book toc", "sheet meta", "topics", "topic", "topicCat", "Text", "TextAndConnections", "Sheet", "SheetAndConnections"];
+    const inBeitMidrash = ["navigation", "book toc", "topics", "topic", "topicCat", "Text", "TextAndConnections", "Sheet", "SheetAndConnections"];
     currentHistoryState.title = currentHistoryState.title.match(/[^|]*/)[0];
     if (inBeitMidrash.includes(currentHistoryState.mode)) {
       return {title: currentHistoryState.title, url: currentHistoryState.url, mode: currentHistoryState.mode, display: this.getDisplayString(currentHistoryState.mode)};
@@ -2085,7 +2071,7 @@ toggleSignUpModal(modalContentKind = SignUpModalKind.Default) {
     const hasColorLine = [null, "book toc", "sheets", "sheets meta"];
     const headerHasBoxShadow = hasColorLine.indexOf(menuOpen) === -1 || !this.props.multiPanel;
     // Header is hidden on certain mobile panels, but still rendered so the mobileNavMenu can be opened
-    const hideHeader = !this.props.multiPanel && !this.state.headerMode && (!menuOpen || menuOpen === "text toc");
+    const hideHeader = !this.props.multiPanel && !this.state.headerMode && !menuOpen;
     const header = (
       <Header
         multiPanel={this.props.multiPanel}

@@ -10,9 +10,11 @@ import Hebrew from './hebrew';
 import Util from './util';
 import $ from './sefariaJquery';
 import Cookies from 'js-cookie';
+import {getVersions as getTwoTexts} from './textManager';
 
 
 let Sefaria = Sefaria || {
+    getTwoTexts:getTwoTexts,
   _dataLoaded: false,
   _inBrowser: (typeof document !== "undefined"),
   toc: [],
@@ -455,7 +457,7 @@ Sefaria = extend(Sefaria, {
             //swap out original versions from the server with the ones that Sefaria client side has sorted and updated with some fields.
             // This happens before saving the text to cache so that both caches are consistent
             if(d?.versions?.length){
-                let versions = Sefaria._saveVersions(d.sectionRef, d.versions);
+                let versions = Sefaria.saveVersions(d.sectionRef, d.versions);
                 d.versions = Sefaria._makeVersions(versions, false);
             }
             Sefaria._saveText(d, settings);
@@ -502,28 +504,68 @@ Sefaria = extend(Sefaria, {
         return language;
     }
   },
-  makeUrlForAPIV3Text: function(ref, requiredVersions, mergeText) {
+  makeUrlForAPIV3Text: function(ref, requiredVersions, mergeText, return_format) {
     const host = Sefaria.apiHost;
     const endPoint = '/api/v3/texts/';
     const versions = requiredVersions.map(obj =>
-        Sefaria.makeParamsStringForAPIV3(obj.language, obj.versionTitle)
+        Sefaria.makeParamsStringForAPIV3(obj.languageFamilyName, obj.versionTitle)
     );
     const mergeTextInt = mergeText ? 1 : 0;
-    const url = `${host}${endPoint}${ref}?version=${versions.join('&version=')}&fill_in_missing_segments=${mergeTextInt}`;
+    const return_format_string = (return_format) ? `&return_format=${return_format}` : '';
+    const url = `${host}${endPoint}${ref}?version=${versions.join('&version=')}&fill_in_missing_segments=${mergeTextInt}${return_format_string}`;
     return url;
   },
-  getTextsFromAPIV3: async function(ref, requiredVersions, mergeText) {
+  getTextsFromAPIV3: async function(ref, requiredVersions, mergeText, return_format) {
     // ref is segment ref or bottom level section ref
     // requiredVersions is array of objects that can have language and versionTitle
-    const url = Sefaria.makeUrlForAPIV3Text(ref, requiredVersions, mergeText);
+    const url = Sefaria.makeUrlForAPIV3Text(ref, requiredVersions, mergeText, return_format);
     //TODO here's the place for getting it from cache
     const apiObject = await Sefaria._ApiPromise(url);
     //TODO here's the place for all changes we want to add, and saving in cache
     return apiObject;
   },
   getAllTranslationsWithText: async function(ref) {
-    let returnObj = await Sefaria.getTextsFromAPIV3(ref, [{language: 'translation', versionTitle: 'all'}], false);
+    let returnObj = await Sefaria.getTextsFromAPIV3(ref, [{languageFamilyName: 'translation', versionTitle: 'all'}], false);
     return Sefaria._sortVersionsIntoBuckets(returnObj.versions);
+  },
+  _adaptApiResponse: function(versionsResponse) {
+    /**
+     * takes an api-v3 texts response for primary and translation versions, and adapt it to the expected 'old' result.
+     * it adds the texts to 'he' and 'text', and the sources to 'sources' and 'heSources'
+     */
+    const versions = versionsResponse.versions;
+    let primary, translation;
+    if (versions.length === 1) {
+      primary = versions[0];
+      translation = {text: []};
+    } else if (versions[0].isPrimary && !versions[1].isSource) {
+      [primary, translation] = versions;
+    } else {
+      [translation, primary] = versions;
+    }
+    ({ text: versionsResponse.text, versionTitle: versionsResponse.versionTitle, direction: versionsResponse.translationDirection, languageFamilyName: versionsResponse.translationLang } = translation);
+    ({ text: versionsResponse.he, versionTitle: versionsResponse.heVersionTitle, direction: versionsResponse.primaryDirection, languageFamilyName: versionsResponse.primaryLang } = primary);
+    if (translation.sources && !translation.sources.every(source => source === translation.sources[0])) {
+        versionsResponse.sources = translation.sources;
+    }
+    if (primary.sources && primary.sources.every(source => source === primary.sources[0])) {
+        versionsResponse.heSources = primary.sources;
+    }
+  },
+  _getPrimaryAndTranslationText: async function(ref, primaryVersionObj, translationVersionObj) {
+    // versionObjs are objects with language and versionTitle
+    primaryVersionObj = (primaryVersionObj?.languageFamilyName) ? primaryVersionObj : {language: 'primary'};
+    translationVersionObj = (translationVersionObj?.languageFamilyName) ? translationVersionObj : {language: 'translation'}; //TODO language prefernces; when defauld primary and trnaslation is the same
+    const versionsResponse = await Sefaria.getTextsFromAPIV3(ref, [primaryVersionObj, translationVersionObj], true, 'wrap_all_entities');
+    Sefaria._adaptApiResponse(versionsResponse);
+    return versionsResponse;
+  },
+  getTextFromCurrVersions: async function(ref, currVersions) {
+    let {he, en} = currVersions;
+    if (!he?.languageFamilyName) {he = {languageFamilyName: 'primary'};}
+    if (!en?.languageFamilyName) {en = {languageFamilyName: 'translation'};}
+    const data = await Sefaria._getPrimaryAndTranslationText(ref, he, en);
+    return data;
   },
   _bulkSheets: {},
   getBulkSheets: function(sheetIds) {
@@ -551,7 +593,7 @@ Sefaria = extend(Sefaria, {
     this._api(Sefaria.apiHost + this._textUrl(ref, settings), function(data) {
         //save versions and then text so both caches have updated versions
         if(data?.versions?.length){
-            let versions = this._saveVersions(data.sectionRef, data.versions);
+            let versions = this.saveVersions(data.sectionRef, data.versions);
             data.versions = this._makeVersions(versions, false);
         }
         this._saveText(data, settings);
@@ -601,7 +643,7 @@ Sefaria = extend(Sefaria, {
     if(!versionsInCache) {
         const url = Sefaria.apiHost + "/api/texts/versions/" + Sefaria.normRef(ref);
         await this._ApiPromise(url).then(d => {
-            this._saveVersions(ref, d);
+            this.saveVersions(ref, d);
         });
     }
     return Promise.resolve(this._versions[ref]);
@@ -717,7 +759,7 @@ Sefaria = extend(Sefaria, {
   _makeVersions: function(versions, byLang){
     return byLang ? versions : Object.values(versions).flat();
   },
-  _saveVersions: function(ref, versions){
+  saveVersions: function(ref, versions){
       for (let v of versions) {
         Sefaria._translateVersions[Sefaria.getTranslateVersionsKey(v.versionTitle, v.language)] = {
           en: v.versionTitle,
@@ -991,6 +1033,13 @@ Sefaria = extend(Sefaria, {
     }
     return data;
   }, */
+  areCurrVersionObjectsEqual: function(version1, version2) {
+      return version1?.versionTitle === version2?.versionTitle && version1?.languageFamilyName === version2?.languageFamilyName;
+  },
+  areBothVersionsEqual(currVersions1, currVersions2) {
+      return Sefaria.areCurrVersionObjectsEqual(currVersions1?.en, currVersions2?.en) &&
+          Sefaria.areCurrVersionObjectsEqual(currVersions1?.he, currVersions2?.he);
+  },
   _index: {}, // Cache for text index records
    index: function(text, index) {
     if (!index) {
@@ -2145,11 +2194,13 @@ _media: {},
           return x;
       })
   },
-  sectionString: function(ref) {
+  sectionString: function(ref, data) {
     // Returns a pair of nice strings (en, he) of the sections indicated in ref. e.g.,
     // "Genesis 4" -> "Chapter 4", "Guide for the Perplexed, Introduction" - > "Introduction"
-    var data = this.getRefFromCache(ref);
-    var result = {
+    if (!data) {
+        data = this.getRefFromCache(ref);
+    }
+    let result = {
           en: {named: "", numbered: ""},
           he: {named: "", numbered: ""}
         };
@@ -2352,7 +2403,7 @@ _media: {},
   },
   areVersionsEqual(v1, v2) {
     // v1, v2 are `currVersions` objects stored like {en: ven, he: vhe}
-    return v1.en == v2.en && v1.he == v2.he;
+    return v1?.en === v2?.en && v1?.he === v2?.he;
   },
   getSavedItem: ({ ref, versions }) => {
     return Sefaria.saved.items.find(s => s.ref === ref && Sefaria.areVersionsEqual(s.versions, versions));
@@ -3157,7 +3208,7 @@ Sefaria.unpackDataFromProps = function(props) {
         let settings = {context: 1, enVersion: panel.enVersion, heVersion: panel.heVersion};
         //save versions first, so their new format is also saved on text cache
         if(panel.text?.versions?.length){
-            let versions = Sefaria._saveVersions(panel.text.sectionRef, panel.text.versions);
+            let versions = Sefaria.saveVersions(panel.text.sectionRef, panel.text.available_versions);
             panel.text.versions = Sefaria._makeVersions(versions, false);
         }
 
@@ -3165,7 +3216,7 @@ Sefaria.unpackDataFromProps = function(props) {
       }
       if(panel.bookRef){
          if(panel.versions?.length){
-            let versions = Sefaria._saveVersions(panel.bookRef, panel.versions);
+            let versions = Sefaria.saveVersions(panel.bookRef, panel.versions);
             panel.versions = Sefaria._makeVersions(versions, false);
          }
       }
