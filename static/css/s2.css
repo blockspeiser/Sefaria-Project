@@ -8578,6 +8578,20 @@ a.sheetAuthorName:hover {
   flex: 1 0 95%;
   text-align: initial;
 }
+.sheetMetaDataBox .title:empty:before {
+  content: "Untitled";
+  color: #999;
+  position: relative;
+  pointer-events: none;
+  width: auto;
+}
+.sheetMetaDataBox .summary:empty:before {
+  content: "Add a description...";
+  color: #999;
+  position: relative;
+  pointer-events: none;
+  width: auto;
+}
 .interface-hebrew .sheetMetaDataBox .title:empty:before {
   content: "ללא שם";
 }
@@ -14202,14 +14216,29 @@ span.ref-link-color-3 {color: blue}
   overflow:hidden;
 }
 
-.sheetsInPanel .dropdownItem {
+.sheetsInPanel .dropdownItem:nth-child(n+2):nth-last-child(n+2) {
   padding: 5px 5px !important;
+}
+
+.sheetsInPanel .dropdownItem:first-child {
+  padding-block-start: 10px !important;
+  padding-block-end: 5px !important;
+}
+
+.sheetsInPanel .dropdownItem:last-child {
+  padding-block-start: 5px !important;
+  padding-block-end: 10px !important;
 }
 
 .sheetsInPanel .headerDropdownMenu .dropdownLinks-menu {
   background: white;
   box-shadow: revert;
-  border: 1px solid #CCCCCC;
+  border: 1px solid var(--light-grey);
+}
+
+.sheetsInPanel .dropdownSeparator {
+  margin-block: 5px;
+  border: 0.5px solid var(--light-grey);
 }
 
 .interface-english .header .headerDropdownMenu .dropdownLinks-menu {
@@ -14217,6 +14246,7 @@ span.ref-link-color-3 {color: blue}
   min-width: 150px;
   width: max-content;
 }
+
 .interface-english .sheetsInPanel .headerDropdownMenu .dropdownLinks-menu {
   min-width: 150px;
   width: max-content;
@@ -14227,15 +14257,21 @@ span.ref-link-color-3 {color: blue}
   min-width: 150px;
   width: max-content;
 }
+
 .interface-hebrew .sheetsInPanel .headerDropdownMenu .dropdownLinks-menu  {
   min-width: 150px;
   width: max-content;
 }
+
 .dropdownLinks-options {
   display: flex;
   flex-direction: column;
   padding: 4px;
   max-width: 220px;
+}
+
+.sheetsInPanel .dropdownLinks-options {
+  padding: 0;
 }
 
 .header .headerDropdownMenu .dropdownLinks-menu.open, .sheetsInPanel .headerDropdownMenu .dropdownLinks-menu.open {
