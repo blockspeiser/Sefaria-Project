@@ -362,6 +362,7 @@ class ConnectionsPanel extends Component {
                   null
               }
               <ResourcesList
+                srefs={this.props.srefs}
                 setConnectionsMode={this.props.setConnectionsMode}
                 counts={resourcesButtonCounts}
               />
@@ -433,27 +434,6 @@ class ConnectionsPanel extends Component {
         filterRef={this.props.filterRef}
       />);
 
-    } else if (this.props.mode === "Sheets") {
-      const connectedSheet = this.props.nodeRef ? this.props.nodeRef.split(".")[0] : null;
-      content = (<div>
-        {this.props.srefs[0].indexOf("Sheet") === -1 ?
-          <MySheetsList
-            srefs={this.props.srefs}
-            connectedSheet={connectedSheet}
-            fullPanel={this.props.fullPanel}
-            handleSheetClick={this.props.handleSheetClick}
-          />
-          : null
-        }
-        {this.props.srefs[0].indexOf("Sheet") === -1 ?
-          <PublicSheetsList
-            srefs={this.props.srefs}
-            connectedSheet={connectedSheet}
-            fullPanel={this.props.fullPanel}
-            handleSheetClick={this.props.handleSheetClick}
-          /> : null
-        }
-      </div>);
     } else if (this.props.mode === "Add To Sheet") {
       let refForSheet, versionsForSheet, selectedWordsForSheet, nodeRef;
       // add source from connections
@@ -728,12 +708,16 @@ ConnectionsPanel.propTypes = {
   backButtonSettings:      PropTypes.object,
 };
 
+const createSheetsWithRefURL = (srefs) => {
+  const normalizedRef = Sefaria.normRef(srefs);
+  window.open(`${Sefaria.apiHost}/sheets/sheets-with-ref/${normalizedRef}`);
+}
 
-const ResourcesList = ({ masterPanelMode, setConnectionsMode, counts }) => {
+const ResourcesList = ({ srefs, setConnectionsMode, counts }) => {
   // A list of Resources in addition to connection
   return (
     <div className="toolButtonsList">
-      <ToolsButton en="Sheets" he="דפי מקורות" image="sheet.svg" count={counts["sheets"]} urlConnectionsMode="Sheets" onClick={() => setConnectionsMode("Sheets")} />
+      <ToolsButton en="Sheets" he="דפי מקורות" image="sheet.svg" count={counts["sheets"]} urlConnectionsMode="Sheets" onClick={() => createSheetsWithRefURL(srefs)} />
       <ToolsButton en="Web Pages" he="דפי אינטרנט" image="webpages.svg" count={counts["webpages"]} urlConnectionsMode="WebPages" onClick={() => setConnectionsMode("WebPages")} />
       <ToolsButton en="Topics" he="נושאים" image="hashtag-icon.svg" count={counts["topics"]} urlConnectionsMode="Topics" onClick={() => setConnectionsMode("Topics")} alwaysShow={Sefaria.is_moderator} />
       <ToolsButton en="Manuscripts" he="כתבי יד" image="manuscripts.svg" count={counts["manuscripts"]} urlConnectionsMode="manuscripts" onClick={() => setConnectionsMode("manuscripts")} />
@@ -750,7 +734,7 @@ const ToolsList = ({ setConnectionsMode, toggleSignUpModal, openComparePanel, co
   // A list of Resources in addition to connection
   return (
     <div className="toolButtonsList">
-      <ToolsButton en="Add to Sheet" he="הוספה לדף מקורות" image="sheetsplus.svg" onClick={() => !Sefaria._uid ? toggleSignUpModal(SignUpModalKind.AddToSheet) : setConnectionsMode("Add To Sheet", { "addSource": "mainPanel" })} />
+      {Sefaria._uid && <ToolsButton en="Add to Sheet" he="הוספה לדף מקורות" image="sheetsplus.svg" onClick={() => setConnectionsMode("Add To Sheet", { "addSource": "mainPanel" })} />}
       <ToolsButton en="Dictionaries" he="מילונים" image="dictionaries.svg" urlConnectionsMode="Lexicon" onClick={() => setConnectionsMode("Lexicon")} />
       {openComparePanel ? <ToolsButton en="Compare Text" he="טקסט להשוואה" image="compare-panel.svg" onClick={openComparePanel} /> : null}
       <ToolsButton en="Notes" he="הערות" image="notes.svg" alwaysShow={true} count={counts["notes"]} urlConnectionsMode="Notes" onClick={() => !Sefaria._uid ? toggleSignUpModal(SignUpModalKind.Notes) : setConnectionsMode("Notes")} />

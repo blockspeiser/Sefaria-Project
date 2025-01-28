@@ -742,35 +742,10 @@ p.registration-links a:hover{
   margin: 0;
   width: 100%;
 }
-#aboutCover {
-  height: 440px;
-  margin-left: 250px;
-  padding: 180px 0;
-  background-color: #ADA99B;
-  box-sizing: border-box;
-  text-align: center;
-  overflow: hidden;
-  position: relative;
-}
-#aboutVideo {
-  position: absolute;
-  top: -90px;
-  left: 0;
-  min-width: 1200px;
-  z-index: 0;
-  width: 100%;
-}
 
 @media (max-width: 450px) {
   #aboutPage #aboutHeader {
     margin-bottom: 130px;
-  }
-  #aboutPage #aboutCover {
-    height: 270px;
-    padding: 180px 0;
-  }
-  #aboutPage #aboutVideo {
-    min-width: 900px;
   }
 }
 #donatePage pre{
@@ -899,11 +874,6 @@ p.registration-links a:hover{
 #editProfilePage #sheetsBox,
 #editProfilePage #aboutBox {
   margin-bottom: 60px;
-  display: flex;
-  display: -webkit-flex;
-  justify-content: space-between;
-  -webkit-justify-content:space-between;
-  flex-flow: row wrap;
 }
 #editProfilePage #sheetsBox{
   flex-direction: column;
@@ -947,7 +917,6 @@ p.registration-links a:hover{
 }
 #editProfilePage .field {
   margin-bottom: 20px;
-  width: 48%;
   min-width: 300px;
 }
 #editProfilePage .field input {
