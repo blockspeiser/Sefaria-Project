@@ -2,7 +2,7 @@ import React from 'react';
 import classNames  from 'classnames';
 import {GeneralAutocomplete} from "../GeneralAutocomplete";
 import Sefaria from "../sefaria/sefaria";
-import {SearchButton} from "../Misc";
+import {InterfaceText, SearchButton} from "../Misc";
 
 const getSuggestions = async (input) => {
     if (input.length <=1) {
@@ -115,9 +115,14 @@ const renderInput = (openTopic, numOfTopics, highlightedIndex, highlightedSugges
     )
 }
 
+const scrollBrowseTopicsIntoView = (e) =>{
+    document.getElementById("browseTopics")?.scrollIntoView({block: 'center', inline: 'center', behavior: 'auto'});
+}
+
 export const TopicLandingSearch = ({openTopic, numOfTopics}) => {
 
     return (
+        <>
         <div className="topic-landing-search-wrapper">
             <GeneralAutocomplete
                 getSuggestions={getSuggestions}
@@ -128,5 +133,9 @@ export const TopicLandingSearch = ({openTopic, numOfTopics}) => {
                 // shouldDisplaySuggestions={()=>true}
             />
         </div>
+    <div className="explore-all-topics-prompt" onClick={scrollBrowseTopicsIntoView}>
+        <InterfaceText>Explore all topics ›</InterfaceText>
+    </div>
+            </>
     );
 };
